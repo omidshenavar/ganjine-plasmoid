@@ -23,6 +23,9 @@ A KDE Plasma widget that displays random Persian poems from [ganjoor.net](http:/
 - KDE Plasma 6.0 or later.
 - Internet connection to fetch poems from ganjoor.net.
 
+### Download
+Download the latest version from the [Releases page](https://github.com/omidshenavar/ganjine-plasmoid/releases).
+
 ### Install via Source
 1. Clone the repository:
     ```bash
