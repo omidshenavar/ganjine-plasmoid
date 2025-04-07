@@ -1,0 +1,29 @@
+{
+    "Icon": "accessories-text-editor",
+    "KPlugin": {
+        "Id": "org.kde.plasma.ganjine",
+        "Name": "Ganjine",
+        "Description": "A widget that displays random Persian poems from ganjoor.net. Originally created as a Cinnamon desklet by Mohammad S. (mohammad-sn) and ported to KDE Plasma by Omid Shenavar.",
+        "Category": "Utilities",
+        "License": "GPL-3.0+",
+        "Version": "0.1",
+        "EnabledByDefault": true,
+        "Authors": [
+            {
+                "Email": "shenavar.omid@gmail.com",
+                "Name": "Omid Shenavar",
+                "Description": "Ported to KDE Plasma"
+            },
+            {
+                "Email": "ganjine@mohammad-sn",
+                "Name": "Mohammad S. (mohammad-sn)",
+                "Description": "Original creator of the Cinnamon desklet"
+            }
+        ],
+        "Website": "https://github.com/omidshenavar/ganjine-plasmoid",
+        "X-KDE-PluginInfo-Original-Source": "https://github.com/linuxmint/cinnamon-spices-desklets/tree/master/ganjine@mohammad-sn"
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-KDE-PluginInfo-Version": "6.2"
+}
