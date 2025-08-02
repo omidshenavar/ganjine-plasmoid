@@ -24,7 +24,7 @@ A KDE Plasma widget that displays random Persian poems from [ganjoor.net](http:/
 - Internet connection to fetch poems from ganjoor.net.
 
 ### Download
-Download the latest version from the [Releases page](https://github.com/omidshenavar/ganjine-plasmoid/releases).
+Download the latest version from the [Releases page](https://github.com/omidshenavar/ganjine-plasmoid/releases) or [KDE Store](https://store.kde.org/p/2280314).
 
 ### Install via Source
 1. Clone the repository:
@@ -61,6 +61,13 @@ Right-click the widget and select "Configure Ganjine..." to customize:
 - **Refresh Interval:** Set how often a new poem is fetched (in minutes).
 - **Poet Selection:** Limit poems to a specific poet from the list.
 
+## Known Issues
+- **Text Overflow with Enlarged Font Size**
+
+**Problem:** When increasing the poem's font size, the text may overflow outside the background.
+
+**Workaround:** Manually resize the widget slightly in KDE edit mode after changing the font size to adjust the background properly.
+
 ## Authors
 
 - **Mohammad S. (mohammad-sn)** - Original creator of the Cinnamon desklet.
@@ -68,7 +75,7 @@ Right-click the widget and select "Configure Ganjine..." to customize:
 
 ## License
 
-This project is licensed under the GPL-3.0+ License. See the LICENSE file for details.
+This project is licensed under the GPL-3.0+ License.
 
 ## Acknowledgments
 
