@@ -11,6 +11,13 @@ A KDE Plasma widget that displays random Persian poems from [ganjoor.net](http:/
 - Copy poem text or link to clipboard.
 - Open poem source link in a web browser.
 
+## What's New in v0.2
+- **Dynamic Layout & Resizing Fix:** The widget now correctly calculates its minimum required size dynamically based on your chosen font size. The text will no longer overflow the background when you enlarge the font. Additionally, manual resizing in Plasma Edit Mode is fully supported!
+- **Background Roundness Control:** Added a new setting to adjust the corner roundness (border radius) of the custom background.
+- **Restored Missing Features:** Added UI buttons for "Previous Poem" and "Copy Text" which were listed as features but missing from the initial Plasma port.
+- **Modernized UI:** Upgraded custom icons and graphical effects to use native `Kirigami.Icon` and Plasma 6 best practices.
+- **Custom Widget Explorer Icon:** Embedded the Ganjine logo directly in the package (displays properly in Plasma 6.7.0+).
+
 ## Screenshots
 
 ![Ganjine Widget in Action](images/Screenshot.png)
@@ -57,16 +64,9 @@ Right-click the widget and select "Configure Ganjine..." to customize:
 - **Font:** Choose the desired font for poem text.
 - **Font Size and Boldness:** Adjust the text size and boldness.
 - **Text Color and Opacity:** Set the color and transparency of the poem text.
-- **Background:** Enable a custom background with adjustable color and opacity.
+- **Background:** Enable a custom background with adjustable color, opacity, and corner roundness.
 - **Refresh Interval:** Set how often a new poem is fetched (in minutes).
 - **Poet Selection:** Limit poems to a specific poet from the list.
-
-## Known Issues
-- **Text Overflow with Enlarged Font Size**
-
-**Problem:** When increasing the poem's font size, the text may overflow outside the background.
-
-**Workaround:** Manually resize the widget slightly in KDE edit mode after changing the font size to adjust the background properly.
 
 ## Authors
 

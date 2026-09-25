@@ -1,6 +1,6 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15 as QQC2
-import QtQuick.Layouts 1.15
+import QtQuick
+import QtQuick.Controls as QQC2
+import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kquickcontrols as KQuickControls
 import org.kde.kcmutils as KCM
@@ -15,7 +15,8 @@ KCM.SimpleKCM {
     property color cfg_textColor: plasmoid.configuration.textColor || "#FFFFFF"
     property real cfg_textOpacity: plasmoid.configuration.textOpacity || 1.0
     property color cfg_backgroundColor: plasmoid.configuration.backgroundColor || "#000000"
-    property real cfg_backgroundOpacity: plasmoid.configuration.backgroundOpacity || 0.5
+    property real cfg_backgroundOpacity: plasmoid.configuration.backgroundOpacity !== undefined ? plasmoid.configuration.backgroundOpacity : 0.5
+    property int cfg_backgroundRadius: plasmoid.configuration.backgroundRadius !== undefined ? plasmoid.configuration.backgroundRadius : 5
     property bool cfg_useBackground: plasmoid.configuration.useBackground || false
     property int cfg_refreshInterval: plasmoid.configuration.refreshInterval || 20
     property bool cfg_limitToPoet: plasmoid.configuration.limitToPoet || false
@@ -102,6 +103,16 @@ KCM.SimpleKCM {
             stepSize: 0.1
             value: configRoot.cfg_backgroundOpacity
             onValueChanged: configRoot.cfg_backgroundOpacity = value
+        }
+
+        QQC2.SpinBox {
+            id: backgroundRadiusSpinBox
+            Kirigami.FormData.label: i18n("Background Roundness:")
+            enabled: configRoot.cfg_useBackground
+            from: 0
+            to: 50
+            value: configRoot.cfg_backgroundRadius
+            onValueChanged: configRoot.cfg_backgroundRadius = value
         }
 
         Kirigami.Heading { level: 2; text: i18n("Options") }

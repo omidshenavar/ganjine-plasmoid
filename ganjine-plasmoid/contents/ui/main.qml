@@ -1,10 +1,9 @@
-import QtQuick 2.15
-import QtQuick.Layouts 1.15
-import org.kde.plasma.plasmoid 2.0
-import org.kde.plasma.core 2.0 as PlasmaCore
-import org.kde.kirigami 2.20 as Kirigami
-import QtQuick.Controls 2.15 as QQC2
-import Qt5Compat.GraphicalEffects
+import QtQuick
+import QtQuick.Layouts
+import org.kde.plasma.plasmoid
+import org.kde.plasma.core as PlasmaCore
+import org.kde.kirigami as Kirigami
+import QtQuick.Controls as QQC2
 import "../code/main.js" as Logic
 
 PlasmoidItem {
@@ -21,7 +20,8 @@ PlasmoidItem {
     property color textColor: Plasmoid.configuration.textColor || "#FFFFFF"
     property real textOpacity: Plasmoid.configuration.textOpacity || 1.0
     property color backgroundColor: Plasmoid.configuration.backgroundColor || "#000000"
-    property real backgroundOpacity: Plasmoid.configuration.backgroundOpacity || 0.5
+    property real backgroundOpacity: Plasmoid.configuration.backgroundOpacity !== undefined ? Plasmoid.configuration.backgroundOpacity : 0.5
+    property int backgroundRadius: Plasmoid.configuration.backgroundRadius !== undefined ? Plasmoid.configuration.backgroundRadius : 5
     property bool useBackground: Plasmoid.configuration.useBackground || false
     property string fontFamily: Plasmoid.configuration.fontFamily || "Vazirmatn"
     property int fontSize: Plasmoid.configuration.fontSize || 18
@@ -42,6 +42,13 @@ PlasmoidItem {
         font.family: root.fontFamily
         font.pointSize: root.fontSize
         font.bold: root.fontBold
+    }
+
+    TextEdit {
+        id: clipboardHelper
+        width: 0
+        height: 0
+        opacity: 0
     }
 
     function calculatePreferredWidth() {
@@ -113,7 +120,8 @@ PlasmoidItem {
         id: fullRep
         Layout.minimumWidth: 400
         Layout.preferredWidth: root.calculatedWidth
-        implicitHeight: 350
+        Layout.minimumHeight: mainLayout.implicitHeight + (Kirigami.Units.gridUnit * 2)
+        Layout.preferredHeight: Math.max(350, Layout.minimumHeight)
 
         Rectangle {
             id: backgroundRect
@@ -121,6 +129,7 @@ PlasmoidItem {
             color: root.backgroundColor
             opacity: root.useBackground ? root.backgroundOpacity : 0
             border.width: 0
+            radius: root.backgroundRadius
         }
 
         Timer {
@@ -138,6 +147,7 @@ PlasmoidItem {
         }
 
         ColumnLayout {
+            id: mainLayout
             anchors.fill: parent
             anchors.margins: Kirigami.Units.gridUnit
             spacing: Kirigami.Units.smallSpacing
@@ -218,45 +228,101 @@ PlasmoidItem {
                 opacity: root.textOpacity * 0.7
             }
 
-            // Refresh button
-            QQC2.Button {
+            RowLayout {
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: root.fontSize * 0.8
-                Layout.preferredHeight: root.fontSize * 0.8
+                spacing: Kirigami.Units.largeSpacing
 
-                contentItem: Item {
-                    anchors.fill: parent
-                    Image {
-                        id: refreshIcon
-                        anchors.fill: parent
-                        source: "../icons/refresh.svg"
-                        fillMode: Image.PreserveAspectFit
-                        sourceSize.width: root.fontSize * 0.8
-                        sourceSize.height: root.fontSize * 0.8
-                        visible: false
+                // Previous button
+                QQC2.Button {
+                    Layout.preferredWidth: root.fontSize * 1.0
+                    Layout.preferredHeight: root.fontSize * 1.0
+                    enabled: root.poemHistory.length > 0
+
+                    contentItem: Kirigami.Icon {
+                        source: "go-previous"
+                        anchors.centerIn: parent
+                        width: parent.width * 0.8
+                        height: parent.height * 0.8
+                        Kirigami.Theme.inherit: false
+                        Kirigami.Theme.textColor: root.textColor
+                        opacity: parent.enabled ? root.textOpacity : 0.3
                     }
-                    ColorOverlay {
-                        anchors.fill: refreshIcon
-                        source: refreshIcon
-                        color: root.textColor
+                    background: Rectangle { color: "transparent"; radius: 5 }
+                    hoverEnabled: true
+                    onHoveredChanged: background.color = hovered ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
+                    
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.text: i18n("Previous Poem")
+
+                    onClicked: {
+                        var result = Logic.showPreviousPoem(root.poemHistory)
+                        if (result) {
+                            root.currentPoemMesras = result.poem.mesras
+                            root.currentPoet = result.poem.poet
+                            root.poemLink = result.poem.link
+                            root.poemHistory = result.newHistory
+                            var serializedHistory = root.poemHistory.map(JSON.stringify)
+                            Plasmoid.configuration.poemHistory = serializedHistory
+                            refreshTimer.restart()
+                        }
+                    }
+                }
+
+                // Copy button
+                QQC2.Button {
+                    Layout.preferredWidth: root.fontSize * 1.0
+                    Layout.preferredHeight: root.fontSize * 1.0
+
+                    contentItem: Kirigami.Icon {
+                        source: "edit-copy"
+                        anchors.centerIn: parent
+                        width: parent.width * 0.8
+                        height: parent.height * 0.8
+                        Kirigami.Theme.inherit: false
+                        Kirigami.Theme.textColor: root.textColor
                         opacity: root.textOpacity
                     }
+                    background: Rectangle { color: "transparent"; radius: 5 }
+                    hoverEnabled: true
+                    onHoveredChanged: background.color = hovered ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
+                    
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.text: i18n("Copy Text")
+
+                    onClicked: {
+                        var textToCopy = root.currentPoemMesras.filter(function(m) { return m !== ""; }).join("\n")
+                        textToCopy += "\n— " + root.currentPoet
+                        clipboardHelper.text = textToCopy
+                        clipboardHelper.selectAll()
+                        clipboardHelper.copy()
+                    }
                 }
 
-                background: Rectangle {
-                    color: "transparent"
-                    radius: 5
-                    border.width: 0
-                }
+                // Refresh button
+                QQC2.Button {
+                    Layout.preferredWidth: root.fontSize * 1.0
+                    Layout.preferredHeight: root.fontSize * 1.0
 
-                hoverEnabled: true
-                onHoveredChanged: {
-                    background.color = hovered ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
-                }
+                    contentItem: Kirigami.Icon {
+                        source: "view-refresh"
+                        anchors.centerIn: parent
+                        width: parent.width * 0.8
+                        height: parent.height * 0.8
+                        Kirigami.Theme.inherit: false
+                        Kirigami.Theme.textColor: root.textColor
+                        opacity: root.textOpacity
+                    }
+                    background: Rectangle { color: "transparent"; radius: 5 }
+                    hoverEnabled: true
+                    onHoveredChanged: background.color = hovered ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
+                    
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.text: i18n("Next Poem")
 
-                onClicked: {
-                    refreshTimer.restart()
-                    root.fetchPoem(root.limitToPoet, root.selectedPoet)
+                    onClicked: {
+                        refreshTimer.restart()
+                        root.fetchPoem(root.limitToPoet, root.selectedPoet)
+                    }
                 }
             }
         }
