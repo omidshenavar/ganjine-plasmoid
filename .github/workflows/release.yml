@@ -1,0 +1,124 @@
+name: Build and Release Plasmoid
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ganjine-plasmoid/**'
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Auto-bump version before release'
+        required: true
+        default: 'none'
+        type: choice
+        options:
+          - none (use metadata.json version)
+          - minor (e.g. 0.2 -> 0.3)
+          - major (e.g. 0.X -> 1.0)
+          - patch (e.g. 0.2 -> 0.2.1)
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Handle Version Bump (if requested via manual dispatch)
+        id: bump_step
+        run: |
+          BUMP="${{ inputs.bump }}"
+          CURRENT_VER=$(jq -r '.KPlugin.Version // .Version' ganjine-plasmoid/metadata.json)
+          echo "Current version in metadata.json: $CURRENT_VER"
+
+          if [ "$BUMP" != "none (use metadata.json version)" ] && [ -n "$BUMP" ]; then
+            # Parse version parts
+            IFS='.' read -r -a PARTS <<< "$CURRENT_VER"
+            MAJOR="${PARTS[0]:-0}"
+            MINOR="${PARTS[1]:-0}"
+            PATCH="${PARTS[2]:-0}"
+
+            if [ "$BUMP" = "major (e.g. 0.X -> 1.0)" ]; then
+              NEW_VER="$((MAJOR + 1)).0"
+            elif [ "$BUMP" = "minor (e.g. 0.2 -> 0.3)" ]; then
+              NEW_VER="${MAJOR}.$((MINOR + 1))"
+            elif [ "$BUMP" = "patch (e.g. 0.2 -> 0.2.1)" ]; then
+              NEW_VER="${MAJOR}.${MINOR}.$((PATCH + 1))"
+            fi
+
+            echo "Bumping version to: $NEW_VER"
+            # Update metadata.json
+            jq --arg v "$NEW_VER" '.KPlugin.Version = $v | if has("Version") then .Version = $v else . end' ganjine-plasmoid/metadata.json > metadata.tmp && mv metadata.tmp ganjine-plasmoid/metadata.json
+
+            # Configure git and commit the version bump
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add ganjine-plasmoid/metadata.json
+            git commit -m "Bump version to v${NEW_VER} [skip ci]"
+            git push origin main
+            
+            VERSION="$NEW_VER"
+          else
+            if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+              VERSION="${GITHUB_REF_NAME#v}"
+            else
+              VERSION="$CURRENT_VER"
+            fi
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if Release / Tag already exists
+        id: check_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.bump_step.outputs.TAG }}"
+          echo "Checking if release for $TAG exists..."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "EXISTS=true" >> $GITHUB_OUTPUT
+            echo "Release $TAG already exists on GitHub."
+          else
+            echo "EXISTS=false" >> $GITHUB_OUTPUT
+            echo "Release $TAG does not exist yet."
+          fi
+
+      - name: Package Plasmoid
+        if: steps.check_release.outputs.EXISTS == 'false'
+        run: |
+          VERSION="${{ steps.bump_step.outputs.VERSION }}"
+          ASSET_NAME="ganjine-v${VERSION}.plasmoid"
+          
+          # Zip the contents of ganjine-plasmoid directory
+          cd ganjine-plasmoid
+          zip -r "../${ASSET_NAME}" . -x "*.git*" "*.DS_Store*" "*~"
+          cd ..
+
+          echo "ASSET_NAME=${ASSET_NAME}" >> $GITHUB_OUTPUT
+          ls -lh "${ASSET_NAME}"
+        id: package
+
+      - name: Publish GitHub Release
+        if: steps.check_release.outputs.EXISTS == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.bump_step.outputs.TAG }}"
+          VERSION="${{ steps.bump_step.outputs.VERSION }}"
+          ASSET="${{ steps.package.outputs.ASSET_NAME }}"
+
+          echo "Publishing release $TAG with asset $ASSET..."
+          gh release create "$TAG" "$ASSET" \
+            --title "Ganjine v${VERSION}" \
+            --generate-notes
