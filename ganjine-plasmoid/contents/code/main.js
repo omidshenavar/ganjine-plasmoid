@@ -8,16 +8,55 @@ function copyToClipboard(text) {
 // Utility to decode HTML entities
 function decodeHtmlEntities(text) {
     if (!text) return "";
-    // Replace common HTML entities, including ZWNJ
+
+    var namedEntities = {
+        "zwnj": "\u200C",
+        "zwj": "\u200D",
+        "rlm": "\u200F",
+        "lrm": "\u200E",
+        "laquo": "\u00AB",
+        "raquo": "\u00BB",
+        "quot": '"',
+        "apos": "'",
+        "lt": "<",
+        "gt": ">",
+        "nbsp": " ",
+        "hellip": "…",
+        "ndash": "–",
+        "mdash": "—",
+        "amp": "&"
+    };
+
+    var fromCodePoint = (typeof String.fromCodePoint === "function")
+        ? String.fromCodePoint
+        : String.fromCharCode;
+
     return text
-    .replace(/&zwnj;|&#8204;/g, "\u200C") // Decode ZWNJ
-    .replace(/&amp;/g, "&")              // Decode ampersand
-    .replace(/&lt;/g, "<")               // Decode less-than
-    .replace(/&gt;/g, ">")               // Decode greater-than
-    .replace(/&quot;/g, '"')             // Decode double quote
-    .replace(/&#39;/g, "'")              // Decode single quote
-    .replace(/&#x200C;/g, "\u200C")      // Decode ZWNJ in hexadecimal form
-    .replace(/[\n\r\t]/g, "");           // Remove control characters (but keep ZWNJ)
+        // Decode hexadecimal numeric entities (e.g. &#xAB;, &#xBB;, &#x200C;)
+        .replace(/&#[xX]([0-9a-fA-F]+);/g, function(match, hex) {
+            var code = parseInt(hex, 16);
+            try {
+                return (!isNaN(code) && code > 0) ? fromCodePoint(code) : match;
+            } catch (e) {
+                return match;
+            }
+        })
+        // Decode decimal numeric entities (e.g. &#171;, &#8204;)
+        .replace(/&#([0-9]+);/g, function(match, dec) {
+            var code = parseInt(dec, 10);
+            try {
+                return (!isNaN(code) && code > 0) ? fromCodePoint(code) : match;
+            } catch (e) {
+                return match;
+            }
+        })
+        // Decode named entities (e.g. &laquo;, &raquo;, &zwnj;, &amp;)
+        .replace(/&([a-zA-Z]+);/g, function(match, name) {
+            var lower = name.toLowerCase();
+            return namedEntities.hasOwnProperty(lower) ? namedEntities[lower] : match;
+        })
+        // Remove control characters (but keep ZWNJ)
+        .replace(/[\n\r\t]/g, "");
 }
 
 // Process the JavaScript response from ganjoor.net

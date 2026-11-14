@@ -7,7 +7,7 @@
         "Description": "A widget that displays random Persian poems from ganjoor.net",
         "Category": "Utilities",
         "License": "GPL-3.0+",
-        "Version": "0.2",
+        "Version": "0.2.1",
         "EnabledByDefault": true,
         "Authors": [
             {
